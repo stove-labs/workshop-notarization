@@ -1,4 +1,5 @@
 import { MichelsonMap } from '@taquito/taquito'
+
 type address = string
 type hash = string
 type signee = address
@@ -11,6 +12,9 @@ interface Storage {
   get(key: hash): Promise<signatures>
 }
 
+/**
+ * Extracted from taquito manually because it's not exported
+ */
 interface SendParams {
   fee?: number
   storageLimit?: number

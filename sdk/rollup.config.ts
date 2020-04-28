@@ -5,6 +5,7 @@ import camelCase from 'lodash.camelcase'
 import typescript from 'rollup-plugin-typescript2'
 import json from 'rollup-plugin-json'
 
+
 const pkg = require('./package.json')
 
 const libraryName = 'tezos-notary-sdk'
@@ -24,7 +25,10 @@ export default {
     // Allow json resolution
     json(),
     // Compile TypeScript files
-    typescript({ useTsconfigDeclarationDir: true }),
+    typescript({ 
+      typescript: require('typescript'),
+      useTsconfigDeclarationDir: true 
+    }),
     // Allow bundling cjs modules (unlike webpack, rollup doesn't understand cjs)
     commonjs(),
     // Allow node_modules resolution, so you can use 'external' to control
