@@ -69,5 +69,5 @@ In order to use your migration scripts with a different network than your local 
 
 Make sure to [claim a new account at the faucet](https://faucet.tzalpha.net), and replace the `faucet.json` file with the new one downloaded previously.
 ```shell
-$ npm run migrate -- --network carthagenet
+$ truffle migrate --network carthagenet
 ```

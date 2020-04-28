@@ -5,10 +5,9 @@
   "dependencies": {},
   "devDependencies": {
     "@taquito/taquito": "^6.1.1-beta.0",
-    "fs-extra": "^9.0.0",
+    "eztz.js": "git+https://github.com/TezTech/eztz.git",
     "lodash": "^4.17.15",
     "promise-retry": "^1.1.1",
-    "sotez": "^0.6.2",
     "truffle": "^5.2.0-tezos.3"
   },
   "scripts": {
