@@ -1,6 +1,7 @@
 #include "./../partials/notary/storage/storage.religo"
 #include "./../partials/notary/action/action.religo"
 #include "./../partials/notary/notarizeDocument/notarizeDocument.religo"
+#include "./../partials/notary/signDocument/signDocument.religo"
 
 // single function main represents a contract
 // takes a touple as a parameter
@@ -9,6 +10,6 @@
 let main = ((action, storage): (action, storage)): (list(operation), storage) => {
     switch (action) {
         | NotarizeDocument(notarizeParameter) => notarizeDocument(notarizeParameter, storage)
-        | SignDocument(signParameter) => (([] : list(operation)), storage)
+        | SignDocument(signParameter) => signDocument(signParameter, storage)
     }
 }
