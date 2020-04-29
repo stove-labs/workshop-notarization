@@ -53,7 +53,7 @@ class TezosNotarySDK {
    * Compose a signing operation for the provided notarized document
    * @param document
    */
-  public sign(document: NotarizedDocument): ContractMethod {
+  public sign(document: Document): ContractMethod {
     return this.contract.methods.signDocument(document.hash)
   }
 }
