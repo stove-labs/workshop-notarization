@@ -93,10 +93,11 @@ describe('Notarization flow', () => {
   })
 
   test('signing of the document by Alice', async done => {
-    const signingOperation: TransactionOperation = await notary.sign(document).send()
-    await signingOperation.confirmation(1)
     const notarizedDocument: NotarizedDocument = await notary.getDocument(document)
-    expect(notarizedDocument.signatures[alice.pkh]).toBeTruthy()
+    const signingOperation: TransactionOperation = await notary.sign(notarizedDocument).send()
+    await signingOperation.confirmation(1)
+    const notarizedAndSignedDocument: NotarizedDocument = await notary.getDocument(document)
+    expect(notarizedAndSignedDocument.signatures[alice.pkh]).toBeTruthy()
     done()
   })
 
@@ -110,10 +111,11 @@ describe('Notarization flow', () => {
 
   test('signing of the document by Bob', async done => {
     setBobAsSigner()
-    const signingOperation: TransactionOperation = await notary.sign(document).send()
-    await signingOperation.confirmation(1)
     const notarizedDocument: NotarizedDocument = await notary.getDocument(document)
-    expect(notarizedDocument.signatures[bob.pkh]).toBeTruthy()
+    const signingOperation: TransactionOperation = await notary.sign(notarizedDocument).send()
+    await signingOperation.confirmation(1)
+    const notarizedAndSignedDocument: NotarizedDocument = await notary.getDocument(document)
+    expect(notarizedAndSignedDocument.signatures[bob.pkh]).toBeTruthy()
     done()
   })
 
