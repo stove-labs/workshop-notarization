@@ -22,7 +22,7 @@ module.exports = {
       type: "tezos"
     },
     carthagenet: {
-      host: "https://carthagenet.tezos.org.ua",
+      host: "https://testnet-tezos.giganode.io",
       network_id: "*",
       secret,
       mnemonic,
