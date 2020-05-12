@@ -3,6 +3,7 @@ import { InMemorySigner } from '@taquito/signer'
 import { TezosNotarySDK, TezosNotarySDKFactory, Document } from '../src/tezos-notary-sdk'
 import { TransactionOperation } from '@taquito/taquito/dist/types/operations/transaction-operation'
 import { NotarizedDocument } from '../src/notarizedDocument'
+import { constants } from '../helpers/constants'
 
 /**
  * Set a long timeout due to time inbetween blocks
@@ -50,6 +51,16 @@ function setBobAsSigner() {
   })
 }
 
+/**
+ * Switch between signers for testing purposes
+ */
+function setSigner(secretKey: string) {
+  Tezos.setProvider({
+    rpc,
+    signer: new InMemorySigner(secretKey)
+  })
+}
+
 describe('Notarization flow', () => {
   let notary: TezosNotarySDK
   /**
@@ -61,7 +72,7 @@ describe('Notarization flow', () => {
   const documentWithSignees: Document = Document.fromHash(hash, signees)
 
   beforeAll(async done => {
-    setAliceAsSigner()
+    setSigner(alice.sk)
     notary = await TezosNotarySDKFactory.at(notaryAddress)
     done()
   })
@@ -95,6 +106,7 @@ describe('Notarization flow', () => {
   test('signing of the document by Alice', async done => {
     const notarizedDocument: NotarizedDocument = await notary.getDocument(document)
     const signingOperation: TransactionOperation = await notary.sign(notarizedDocument).send()
+    console.log('Waiting for confirmation in next block, please be patient ...')
     await signingOperation.confirmation(1)
     const notarizedAndSignedDocument: NotarizedDocument = await notary.getDocument(document)
     expect(notarizedAndSignedDocument.signatures[alice.pkh]).toBeTruthy()
@@ -110,9 +122,10 @@ describe('Notarization flow', () => {
   })
 
   test('signing of the document by Bob', async done => {
-    setBobAsSigner()
+    setSigner(bob.sk)
     const notarizedDocument: NotarizedDocument = await notary.getDocument(document)
     const signingOperation: TransactionOperation = await notary.sign(notarizedDocument).send()
+    console.log('Waiting for confirmation in next block, please be patient ...')
     await signingOperation.confirmation(1)
     const notarizedAndSignedDocument: NotarizedDocument = await notary.getDocument(document)
     expect(notarizedAndSignedDocument.signatures[bob.pkh]).toBeTruthy()
@@ -123,6 +136,28 @@ describe('Notarization flow', () => {
     const notarizedDocument: NotarizedDocument = await notary.getDocument(document)
     const isFullySigned: boolean = notarizedDocument.isFullySigned()
     expect(isFullySigned).toBeTruthy()
+    done()
+  })
+
+  test('that Charly cannot sign account', async done => {
+    // send tez from Alice to Charly
+    setSigner(alice.sk)
+    const charly = {
+      address: 'tz1h6QcawkNF9523f5ydEFvdKL7t3NbuEA6H',
+      sk: 'edsk2mFcqSHpj7ndKMvNaUNRSqS2UZ1FMwUL1wFstHSHzvpXwCzu7S'
+    }
+    const transactionOperation = await Tezos.contract.transfer({ to: charly.address, amount: 100 })
+    await transactionOperation.confirmation(1)
+
+    // set Charly as signer
+    setSigner(charly.sk)
+    const notarizedDocument: NotarizedDocument = await notary.getDocument(document)
+
+    await expect(notary.sign(notarizedDocument).send()).rejects.toEqual(
+      expect.objectContaining({
+        id: String(constants.rpcErrors.michelson.scriptRejected)
+      })
+    )
     done()
   })
 })
