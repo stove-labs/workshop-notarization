@@ -77,10 +77,34 @@ describe('Notarization flow', () => {
     done()
   })
 
+  test('notarization of an existing document is not possible', async done => {
+    /**
+     * Signees are only passed when notarizing the document for the first time
+     */
+    await expect(notary.notarize(documentWithSignees).send()).rejects.toEqual(
+      expect.objectContaining({
+        message: String(constants.contractErrors.documentHashAlreadyNotarized)
+      })
+    )
+    done()
+  })
+
   test('that the document is not fully signed yet', async done => {
     const notarizedDocument: NotarizedDocument = await notary.getDocument(document)
     const isFullySigned: boolean = notarizedDocument.isFullySigned()
     expect(isFullySigned).toBeFalsy()
+    done()
+  })
+
+  test('that Alice should not be able to sign a document that was not notarized', async done => {
+    const notarizedDocument: NotarizedDocument = await notary.getDocument(document)
+    // manipulate to non-existing document
+    notarizedDocument.hash = 'corrupt'
+    await expect(notary.sign(notarizedDocument).send()).rejects.toEqual(
+      expect.objectContaining({
+        message: String(constants.contractErrors.documentNotFound)
+      })
+    )
     done()
   })
 
@@ -91,6 +115,16 @@ describe('Notarization flow', () => {
     await signingOperation.confirmation(1)
     const notarizedAndSignedDocument: NotarizedDocument = await notary.getDocument(document)
     expect(notarizedAndSignedDocument.signatures[alice.pkh]).toBeTruthy()
+    done()
+  })
+
+  test('that Alice cannot sign a document that already signed by her', async done => {
+    const notarizedDocument: NotarizedDocument = await notary.getDocument(document)
+    await expect(notary.sign(notarizedDocument).send()).rejects.toEqual(
+      expect.objectContaining({
+        message: String(constants.contractErrors.documentAlreadySigned)
+      })
+    )
     done()
   })
 
@@ -120,7 +154,7 @@ describe('Notarization flow', () => {
     done()
   })
 
-  test.only('that Chuck should not be able to sign the document', async done => {
+  test('that Chuck should not be able to sign the document', async done => {
     const chuck = {
       pkh: 'tz1h6QcawkNF9523f5ydEFvdKL7t3NbuEA6H',
       sk: 'edsk2mFcqSHpj7ndKMvNaUNRSqS2UZ1FMwUL1wFstHSHzvpXwCzu7S'
