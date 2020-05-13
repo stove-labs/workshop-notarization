@@ -84,7 +84,7 @@ describe('Notarization flow', () => {
     done()
   })
 
-  test('signing of the document by Alice', async done => {
+  test('that Alice should be able to sign document', async done => {
     const notarizedDocument: NotarizedDocument = await notary.getDocument(document)
     const signingOperation: TransactionOperation = await notary.sign(notarizedDocument).send()
     console.log('Waiting for confirmation in next block, please be patient ...')
@@ -102,7 +102,7 @@ describe('Notarization flow', () => {
     done()
   })
 
-  test('signing of the document by Bob', async done => {
+  test('that Bob should be able to sign document', async done => {
     setSigner(bob.sk)
     const notarizedDocument: NotarizedDocument = await notary.getDocument(document)
     const signingOperation: TransactionOperation = await notary.sign(notarizedDocument).send()
@@ -120,7 +120,7 @@ describe('Notarization flow', () => {
     done()
   })
 
-  test.only('that Chuck cannot sign the document', async done => {
+  test.only('that Chuck should not be able to sign the document', async done => {
     const chuck = {
       pkh: 'tz1h6QcawkNF9523f5ydEFvdKL7t3NbuEA6H',
       sk: 'edsk2mFcqSHpj7ndKMvNaUNRSqS2UZ1FMwUL1wFstHSHzvpXwCzu7S'
