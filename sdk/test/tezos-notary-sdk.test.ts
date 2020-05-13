@@ -4,6 +4,7 @@ import { TezosNotarySDK, TezosNotarySDKFactory, Document } from '../src/tezos-no
 import { TransactionOperation } from '@taquito/taquito/dist/types/operations/transaction-operation'
 import { NotarizedDocument } from '../src/notarizedDocument'
 import { constants } from '../helpers/constants'
+import { faucet } from '../helpers/faucet'
 
 /**
  * Set a long timeout due to time inbetween blocks
@@ -30,26 +31,6 @@ const hash = '36d87a683cfb033dcdb751723d5ef32085988716ce87a30c4ee3844992510a6a'
  * Signees for notarization of the document hash above
  */
 const signees = [alice.pkh, bob.pkh]
-
-/**
- * Set Alice as a signer for testing purposes
- */
-function setAliceAsSigner() {
-  Tezos.setProvider({
-    rpc,
-    signer: new InMemorySigner(alice.sk)
-  })
-}
-
-/**
- * Set Bob as a signer for testing purposes
- */
-function setBobAsSigner() {
-  Tezos.setProvider({
-    rpc,
-    signer: new InMemorySigner(bob.sk)
-  })
-}
 
 /**
  * Switch between signers for testing purposes
@@ -139,23 +120,19 @@ describe('Notarization flow', () => {
     done()
   })
 
-  test('that Charly cannot sign account', async done => {
-    // send tez from Alice to Charly
-    setSigner(alice.sk)
-    const charly = {
-      address: 'tz1h6QcawkNF9523f5ydEFvdKL7t3NbuEA6H',
+  test.only('that Chuck cannot sign the document', async done => {
+    const chuck = {
+      pkh: 'tz1h6QcawkNF9523f5ydEFvdKL7t3NbuEA6H',
       sk: 'edsk2mFcqSHpj7ndKMvNaUNRSqS2UZ1FMwUL1wFstHSHzvpXwCzu7S'
     }
-    const transactionOperation = await Tezos.contract.transfer({ to: charly.address, amount: 100 })
-    await transactionOperation.confirmation(1)
-
-    // set Charly as signer
-    setSigner(charly.sk)
+    // fund Chuck's account
+    await faucet.drip(chuck.pkh, 10)
+    // set Chuck as signer
+    setSigner(chuck.sk)
     const notarizedDocument: NotarizedDocument = await notary.getDocument(document)
-
     await expect(notary.sign(notarizedDocument).send()).rejects.toEqual(
       expect.objectContaining({
-        id: String(constants.rpcErrors.michelson.scriptRejected)
+        message: String(constants.contractErrors.senderIsNotASigneeForThisDocument)
       })
     )
     done()
