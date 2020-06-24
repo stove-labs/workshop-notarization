@@ -1,5 +1,5 @@
-import { Tezos } from '@taquito/taquito'
-import { InMemorySigner } from '@taquito/signer'
+import { Tezos, TransactionWalletOperation } from '@taquito/taquito'
+import { InMemorySigner, importKey } from '@taquito/signer'
 import { TezosNotarySDK, TezosNotarySDKFactory, Document } from '../src/tezos-notary-sdk'
 import { TransactionOperation } from '@taquito/taquito/dist/types/operations/transaction-operation'
 import { NotarizedDocument } from '../src/notarizedDocument'
@@ -26,7 +26,7 @@ const { alice, bob } = require('../../smart-contracts/scripts/sandbox/accounts')
 /**
  * sha256 hash of our document `never trust a skinny chef`
  */
-const hash = '36d87a683cfb033dcdb751723d5ef32085988716ce87a30c4ee3844992510a6a'
+const hash = '36d87a683cfb033dcdb751723d5ef32085988716ce87a30c4ee3844992510a6'
 /**
  * Signees for notarization of the document hash above
  */
@@ -37,9 +37,9 @@ const signees = [alice.pkh, bob.pkh]
  */
 function setSigner(secretKey: string) {
   Tezos.setProvider({
-    rpc,
-    signer: new InMemorySigner(secretKey)
+    rpc
   })
+  importKey(Tezos, secretKey)
 }
 
 describe('Notarization flow', () => {
@@ -58,7 +58,7 @@ describe('Notarization flow', () => {
     done()
   })
 
-  test('that the document is not notarized yet', async done => {
+  test.only('that the document is not notarized yet', async done => {
     const isNotarized: boolean = await notary.isNotarized(document)
     expect(isNotarized).toBeFalsy()
     done()
@@ -68,7 +68,7 @@ describe('Notarization flow', () => {
     /**
      * Signees are only passed when notarizing the document for the first time
      */
-    const notarizationOperation: TransactionOperation = await notary
+    const notarizationOperation: TransactionWalletOperation = await notary
       .notarize(documentWithSignees)
       .send()
     await notarizationOperation.confirmation(1)
@@ -110,7 +110,7 @@ describe('Notarization flow', () => {
 
   test('that Alice should be able to sign document', async done => {
     const notarizedDocument: NotarizedDocument = await notary.getDocument(document)
-    const signingOperation: TransactionOperation = await notary.sign(notarizedDocument).send()
+    const signingOperation: TransactionWalletOperation = await notary.sign(notarizedDocument).send()
     console.log('Waiting for confirmation in next block, please be patient ...')
     await signingOperation.confirmation(1)
     const notarizedAndSignedDocument: NotarizedDocument = await notary.getDocument(document)
@@ -139,7 +139,7 @@ describe('Notarization flow', () => {
   test('that Bob should be able to sign document', async done => {
     setSigner(bob.sk)
     const notarizedDocument: NotarizedDocument = await notary.getDocument(document)
-    const signingOperation: TransactionOperation = await notary.sign(notarizedDocument).send()
+    const signingOperation: TransactionWalletOperation = await notary.sign(notarizedDocument).send()
     console.log('Waiting for confirmation in next block, please be patient ...')
     await signingOperation.confirmation(1)
     const notarizedAndSignedDocument: NotarizedDocument = await notary.getDocument(document)

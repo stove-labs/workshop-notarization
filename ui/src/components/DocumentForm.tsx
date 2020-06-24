@@ -141,14 +141,14 @@ export class DocumentForm extends React.Component<Props, State> {
                             /**
                              * Sign
                              */
-                            <Button className="actionButton" onClick={() => this.props.onSign(this.notarizedDocument)}>
+                            <Button className="actionButton" variant="outline-primary" onClick={() => this.props.onSign(this.notarizedDocument)}>
                                 Sign
                             </Button>
                         ) : (!this.props.isNotarized) ? (
                             /**
                              * Notarize
                              */
-                            <Button className="actionButton" onClick={() => this.props.onNotarize(this.props.document)}>
+                            <Button className="actionButton" variant="outline-primary" onClick={() => this.props.onNotarize(this.props.document)}>
                                 Notarize
                             </Button>
                         ) : null}
