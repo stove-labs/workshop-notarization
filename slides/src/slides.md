@@ -272,6 +272,14 @@ class: center, middle
 
 - .bg-nord13[.nord1[enable multiple people to sign]] through smart contracts
 
+--
+
+- by pre-defining a number of shares or .bg-nord13[.nord1[shards]]
+
+--
+
+- that can be *claimed* by co-signers and completes the notarization
+
 ---
 ## Let's explore the process using blockchain
 
@@ -456,6 +464,14 @@ Here's an example of Michelson code:
 
 - .bg-nord13[.nord1[code]] - The actual Michelson code, that has the provided parameter & the current storage value in it's initial stack, and outputs a list of operations & a new storage value as it's resulting stack.
 
+> We will be later using and modifying a smart contract that follows the .bg-nord13[.nord1[TZIP12 token specification]].
+
+---
+# Completing the data
+
+Alice specifies a number of .bg-nord13[.nord1[shards]] that represent a fraction of the contract. In the notarization process she specifies how many of those shards belong to Bob and need .bg-nord13[.nord1[claimed]] to complete the process.
+
+> While this might be trivial for a 2 person notarization, this approach has many benefits for more complex notarizations. Change of ownership, multi-party with unequal *rights* and representation of those in the immutable ledger is a game changer!
 
 ---
 
@@ -482,9 +498,9 @@ Here's an example of Michelson code:
 	                              └─────────────────────────────┘                            
 	                                        ▲             ▲                                  
 	                                        │             │                                  
-	                                        │        transaction                             
-	                               transaction      claiming shards                             
-	                                 w/ hash        for given hash                             
+	                             creating shards        transaction                             
+	                              w/ transaction      claiming shards                             
+	                            containing hash        for given hash                             
 	                                   │                  │                                  
 	                                   │                  │                                  
 	┌──hashing─func──┐           ┌──Account──┐      ┌──Account──┐          ┌──hashing─func──┐
