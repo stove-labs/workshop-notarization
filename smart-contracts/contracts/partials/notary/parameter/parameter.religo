@@ -1,3 +1,5 @@
+type shards = map(shardOwner, shardCount);
+type shardOwners = set(shardOwner);
 /**
  * Provide a hash to be sharder and the way it should be split
  */
@@ -9,7 +11,11 @@ type shardParameter = {
      * rather than computing it from the provided map of shards.
      */
     totalShards: shardCount,
-    shards: map(tokenOwner, shardCount)
+    /**
+     * Used to clean up the transitive ledger
+     */
+    shardOwners: shardOwners,
+    shards: shards
 };
 /**
  * Provide a hash to claim shards of

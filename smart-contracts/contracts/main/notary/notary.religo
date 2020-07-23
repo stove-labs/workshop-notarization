@@ -2,7 +2,9 @@
 #include "../../partials/notary/storage/storage.religo"
 #include "../../partials/notary/parameter/parameter.religo"
 
-type notaryEntrypointReturn = (list(operation), notaryStorage);
+type notaryEntrypointReturn = (list(operation), storage);
+
+#include "../../partials/notary/notary.religo"
 
 /**
  * Notary
@@ -26,6 +28,6 @@ let main = ((parameter, storage): (parameter, storage)): (list(operation), stora
                 }
             )
         }
-        | Notary(notaryParameter) => (([]: list(operation)), storage)
+        | Notary(notaryParameter) => notary((notaryParameter, storage));
     }
 };
