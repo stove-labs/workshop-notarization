@@ -1,0 +1,7 @@
+.node rect { fill: #f7f8fe; stroke: #000000 } 
+.node polygon { fill: #f7f8fe; stroke: #000000 } 
+.node path { fill: #f7f8fe; stroke: #000000 } 
+.nodeWarning > rect{fill:#FFD03B; stroke:#000000;}
+.nodeDanger > rect{fill: #F86D70; stroke:#000000;} 
+.nodeTezos > .label{color: #ffffff} 
+.nodeTezos > rect {fill: #536DFE}
