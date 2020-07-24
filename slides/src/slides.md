@@ -474,6 +474,7 @@ Alice specifies a number of .bg-nord13[.nord1[shards]] that represent a fraction
 > While this might be trivial for a 2 person notarization, this approach has many benefits for more complex notarizations. Change of ownership, multi-party with unequal *rights* and representation of those in the immutable ledger is a game changer!
 
 ---
+exclude: true
 
 # How it comes together
 
@@ -512,14 +513,9 @@ Alice specifies a number of .bg-nord13[.nord1[shards]] that represent a fraction
 ```
 ---
 
-<div class="mermaid">
-    graph LR
-        A-->B
-        B-->C
-        C-->A
-        D-->C
-  </div>
+## High level overview of the solution 👨‍🍳
 
+<img src="./static/high-level.jpg" style="width: 100%" />
 
 ---
 
@@ -549,33 +545,276 @@ class:  center, middle
 class:  center, middle
 
 ## Setting up the workstation
-
----
-## Prerequisites 
-
-Node.js v12 https://nodejs.org/en/ for `npm`
-<br>
-[Docker-compose](https://docs.docker.com/compose/install/) 🐳
-<br>
-[Ligo](https://ligolang.org/docs/intro/installation)
-
-
-#### Course material
-
-
-`git pull https://github.com/stove-labs/workshop-notarization.git`
-
+### Break-out session
 
 ---
 
 class:  center, middle
 
 ## Crash course: Getting started with ReasonLigo
+### Break-out session
+
+---
+# Notarization Workshop
+### Day 2
+
+1. .bg-nord13[.nord1[Similarities]] of .bg-nord13[.nord1[notarization]] and asset creation/.bg-nord13[.nord1[tokenization]]
+1. Understanding .bg-nord13[.nord1[TZIP-12 standard]] for multi-asset contracts
+1. .bg-nord13[.nord1[Extending]] TZIP-12 for notarization
+1. .bg-nord13[.nord1[Deploying and testing]] with Truffle 
+1. Connecting the notarization user interface to the smart contract
 
 ---
 
-class:  center, middle
+class: center, middle
 
-## High level overview of the solution 👨‍🍳
+# Using token contracts for notarization
+---
 
+# Various approaches to notarization
+
+Early versions or "notarization 1.0":
+- times-stamp of a document hash in an immutable ledger
+- proof that the document existed at time **T**
+
+Features of notarization "2.0":
+- multi-party ownership of notarization
+- transfer of ownership (consider selling a car and transferring its papers)
+- holding a fraction of shares or "shards" of the notarized asset
+
+---
+
+class: center, middle
+
+# TZIP12 multi-asset token contract
+
+---
+
+# Assets
+
+Generally speaking, can be fungible and non-fungible.
+
+.bg-nord13[.nord1[Fungible]]: every representation the same (eg. currencies, commodities such as coffee, oil etc.)
+
+.bg-nord13[.nord1[Non-fungible]]: unique, rare, collectible (eg. tickets, game items)
+
+---
+# TZIP12 or FA2 (Financial Application)
+
+In the Ethereum ecosystem dominant designs emerged:
+
+- ERC-20 (fungible tokens) and ERC-721 (non-fungible tokens)
+- Standards evolved to ERC-1155 to support multiple token types in one.
+
+TZIP12 supports multiple types.
+
+---
+# TZIP12
+A token contract implementing the FA2 standard MUST have the following entrypoints:
+
+```ocaml
+type fa2_entry_points =
+
+| Transfer of transfer list
+| Balance_of of balance_of_param
+| Update_operators of update_operator list
+| Token_metadata_registry of address contract
+```
+<br>
+
+> 👨‍🍳 How tokens are created/minted is up to the use-case and the to be implemented business logic.
+
+
+---
+# TZIP12 for notarization
+
+Important to implement a permission behavior, where parties acknowledge the notarization through some transaction. In our solution, we use the concept of .bg-nord13[.nord1[claiming of shards]] in order to complete the notarization process.
+
+In other words, the initiator follows the following steps in the context of TZIP12:
+1. Specify the document hash, number of shards, shards distribution according to addresses (co-signers)
+--
+
+2. Launch of contract
+--
+
+3. Token balances are in a transitive state, until all shards are claimed
+
+--
+4. Co-signers claim shards
+   1. Business logic within the contract checks whether all shards had been claimed
+
+--
+5. All shards claimed initiates the distribution of tokens to respective addresses
+
+--
+6. Final state had been reached and notarization is complete
+
+---
+
+<img src="./static/overview.png" style="width: 100%" />
+
+---
+
+class: middle, center
+
+# Recap Entrypoints
+
+---
+
+
+# Entrypoints
+
+Looking at a smart contract as a collection of functions that share and manipulate the same storage.
+
+When interacting with the smart contract, the submitted parameters arrive at the main function of the code.
+
+How to address specific functions inside the contract by calling it from the "outside"?
+
+.bg-nord13[.nord1[Entrypoints]] match variants of the parameters and route it to the desired function.
+
+<br>
+
+> 👨‍🍳 Entrypoints make functions explicitly callable from the outside of a smart contract.
+
+---
+
+# Entrypoints
+
+From day 1: Counter contract 
+```reason 
+type storage = int;
+type parameter =
+| Increment(int)
+| Decrement(int)
+
+let main = ((parameter, storage): (parameter, storage)): (list(operation), storage) => {
+  let storage = switch (parameter) {
+| Increment(i) => storage + i
+| Decrement(i) => storage - i
+  };
+  (([]: list(operation)), storage);
+};
+
+```
+
+Then used the online editor to `dry-run` and passed .bg-nord13[.nord1[`Increment(10)`]] as .bg-nord13[.nord1[`parameter`]].
+
+---
+
+Our contract of this workshop will expose:
+```reason
+
+type tzip12Parameter = 
+| Transfer(transferParameter)
+| BalanceOf(balanceOfParameterMichelson)
+| Token_metadata_registry(tokenMetadataRegistryParameter)
+
+type notaryParameter = 
+| Shard(shardParameter)
+| Claim(claimParameter)
+
+type parameter = 
+    | TZIP12_(tzip12Parameter)
+    | Notary(notaryParameter)
+```
+
+---
+# Notary
+
+```reason
+type shardOwner = address;
+type shards = map(shardOwner, shardCount);
+type shardOwners = set(shardOwner);
+
+type shardParameter = {
+    documentHash: documentHash,
+    totalShards: shardCount,
+    shardOwners: shardOwners,
+    shards: shards
+};
+
+type claimParameter = documentHash;
+
+type notaryParameter = 
+| Shard(shardParameter)
+| Claim(claimParameter)
+```
+
+---
+# TZIP12_
+
+#### Transfer parameters
+
+```reason
+type transferContents = {
+    to_: tokenOwner,
+    token_id: tokenId,
+    amount: tokenAmount
+};
+type transferContentsMichelson = michelson_pair_right_comb(transferContents);
+
+type transferAuxiliary = {
+    from_: tokenOwner,
+    txs: list(transferContentsMichelson)
+};
+
+type transferMichelson = michelson_pair_right_comb(transferAuxiliary);
+type transferParameter = list(transfer);
+
+type tzip12Parameter = 
+| Transfer(transferParameter)
+| BalanceOf(balanceOfParameterMichelson)
+| Token_metadata_registry(tokenMetadataRegistryParameter)
+
+```
+
+---
+# TZIP12_
+#### BalanceOf parameters
+
+```reason
+type balanceOfRequest = {
+    owner: tokenOwner,
+    token_id: tokenId,
+};
+```
+<small>*simplified without showing transformations</small>
+
+---
+# TZIP12_
+#### Token metadata registry 
+
+```reason
+type tokenSymbol = string;
+type tokenName = string;
+type tokenDecimals = nat;
+type tokenExtrasKey = string;
+type tokenExtrasValue = string;
+type tokenExtras = map(tokenExtrasKey, tokenExtrasValue);
+
+type tokenMetadata = {
+    token_id: tokenId,
+    symbol: tokenSymbol,
+    name: tokenName,
+    decimals: tokenDecimals,
+    extras: tokenExtras
+};
+```
+
+---
+
+class: middle, center
+
+# Extending TZIP-12 for notarization
+
+---
+class: middle, center
+
+# Deploying and testing with Truffle 
+
+---
+
+class: middle, center
+
+# Connecting the notarization user interface to the smart contract
 
